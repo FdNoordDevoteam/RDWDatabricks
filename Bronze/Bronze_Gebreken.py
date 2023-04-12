@@ -22,13 +22,14 @@ yesterday = "2023-03-29"
 # gebreken_bronze = spark.read.json(f'/mnt/iotdata/Gebreken/{firstdate}/*.json')
 # gebreken_bronze= gebreken_bronze.withColumn("Start_Date", lit(firstdate).cast(DateType())).withColumn("End_Date",lit(None).cast(DateType()))
 # gebreken_bronze.write.mode("overwrite").option("overwriteSchema", "true").format("delta").save("/mnt/iotdata/Gebreken/table/tbl_gebreken_Bd")
-tbl_gebreken_Bd = DeltaTable.forPath(spark, "/mnt/iotdata/Gebreken/table/tbl_gebreken_Bd")
-gebreken_B_DF = tbl_gebreken_Bd.toDF()
-display(gebreken_B_DF)
+tbl_file_Bd = DeltaTable.forPath(spark, "/mnt/iotdata/Gebreken/table/tbl_gebreken_Bd")
+file_B_DF = tbl_file_Bd.toDF()
+display(file_B_DF)
+file_B_DF = file_B_DF[file_B_DF.End_Date.isNull()]
 
 # COMMAND ----------
 
-gebreken_bronze_dump = spark.read.json(f'/mnt/iotdata/Gebreken/{yesterday}/*.json')
+gebreken_bronze_dump = spark.read.json(f'/mnt/iotdata/Gebreken/{datetoday}/*.json')
 display(gebreken_bronze_dump)
 
 # COMMAND ----------
@@ -44,20 +45,20 @@ display(gebreken_bronze_dump)
 
 # COMMAND ----------
 
-# for i in range(len(gebreken_B_DF.columns )-2):
-#     print("gebreken_B_DF."+gebreken_B_DF.columns[i]+f'.alias("target_{gebreken_B_DF.columns[i]}"),')
+# for i in range(len(file_B_DF.columns )-2):
+#     print("file_B_DF."+file_B_DF.columns[i]+f'.alias("target_{file_B_DF.columns[i]}"),')
 
 # COMMAND ----------
 
-for i in range(len(gebreken_B_DF.columns)-2):
-    gebreken_B_DF = gebreken_B_DF.withColumnRenamed(gebreken_B_DF.columns[i], "target_"+gebreken_B_DF.columns[i])
+for i in range(len(file_B_DF.columns)-2):
+    file_B_DF = file_B_DF.withColumnRenamed(file_B_DF.columns[i], "target_"+file_B_DF.columns[i])
 
-gebreken_B_DF = gebreken_B_DF.drop(gebreken_B_DF[-1]).drop(gebreken_B_DF[-2])
-display(gebreken_B_DF)
+file_B_DF = file_B_DF.drop(file_B_DF[-1]).drop(file_B_DF[-2])
+display(file_B_DF)
 
 # COMMAND ----------
 
-joinDF = gebreken_bronze_dump.join(gebreken_B_DF,(gebreken_bronze_dump.gebrek_identificatie==gebreken_B_DF.target_gebrek_identificatie), "leftouter").select(gebreken_bronze_dump["*"], gebreken_B_DF["*"])
+joinDF = gebreken_bronze_dump.join(file_B_DF,(gebreken_bronze_dump.gebrek_identificatie==file_B_DF.target_gebrek_identificatie), "leftouter").select(gebreken_bronze_dump["*"], file_B_DF["*"])
 display(joinDF)
 
 # COMMAND ----------
@@ -121,7 +122,7 @@ display(dict_delta)
 
 # COMMAND ----------
 
-tbl_gebreken_Bd.alias("target").merge(
+tbl_file_Bd.alias("target").merge(
 source = scdDF.alias("source"),
 condition = "target.gebrek_identificatie = source.MERGEKEY and target.End_Date is null"
 ).whenMatchedUpdate(set = 
@@ -135,4 +136,9 @@ condition = "target.gebrek_identificatie = source.MERGEKEY and target.End_Date i
 
 # MAGIC %sql
 # MAGIC select * FROM gebreken_table_delta_b
+# MAGIC WHERE einddatum_gebrek_dt IS  NULL
 # MAGIC order by gebrek_identificatie
+
+# COMMAND ----------
+
+

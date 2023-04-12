@@ -8,7 +8,7 @@ from delta import *
 
 datetoday = date.today().strftime("%Y-%m-%d")
 firstdate = "2023-03-24"
-yesterday = "2023-03-30"
+yesterday = "2023-03-31"
 
 # COMMAND ----------
 
@@ -16,15 +16,16 @@ file_name = "Parkeeradres"
 primary_key = "parkingaddressreference"
 target_pm = "target_"+primary_key
 table_name = "tbl_"+file_name+"_Bd"
+date = '2023-03-24'
 
 # COMMAND ----------
 
-file_bronze = spark.read.json(f'/mnt/iotdata/{file_name}/{firstdate}/*.json')
-file_bronze = file_bronze.withColumn("Start_Date", lit(firstdate).cast(DateType())).withColumn("End_Date",lit(None).cast(DateType()))
-file_bronze.write.mode("overwrite").option("overwriteSchema", "true").format("delta").save(f"/mnt/iotdata/{file_name}/table/tbl_{file_name}_Bd")
+# file_bronze = spark.read.json(f'/mnt/iotdata/{file_name}/{firstdate}/*.json')
+# file_bronze = file_bronze.withColumn("Start_Date", lit(firstdate).cast(DateType())).withColumn("End_Date",lit(None).cast(DateType()))
+# file_bronze.write.mode("overwrite").option("overwriteSchema", "true").format("delta").save(f"/mnt/iotdata/{file_name}/table/tbl_{file_name}_Bd")
 tbl_file_Bd = DeltaTable.forPath(spark, f"/mnt/iotdata/{file_name}/table/tbl_{file_name}_Bd")
 file_B_DF = tbl_file_Bd.toDF()
-display(file_B_DF)
+file_B_DF = file_B_DF[file_B_DF.End_Date.isNull()]
 
 
 # COMMAND ----------
@@ -33,23 +34,11 @@ display(file_B_DF)
 
 # COMMAND ----------
 
-# MAGIC %sql
-# MAGIC Create table Parkeeradres_delta_b
-# MAGIC ()
-# MAGIC Location '/mnt/iotdata/Parkeeradres/table/tbl_Parkeeradres_Bd'
-
-# COMMAND ----------
-
-# MAGIC %sql
-# MAGIC SELECT parkingaddressreference, count(parkingaddressreference) as aantal from Parkeeradres_delta_b
-# MAGIC GROUP BY parkingaddressreference
-# MAGIC ORDER BY aantal desc
-
-# COMMAND ----------
-
-# MAGIC %sql
-# MAGIC select * from Parkeeradres_delta_b
-# MAGIC where parkingaddressreference = "2855"
+# %sql
+# drop table Parkeeradres_delta_b;
+# Create table Parkeeradres_delta_b
+# ()
+# Location '/mnt/iotdata/Parkeeradres/table/tbl_Parkeeradres_Bd'
 
 # COMMAND ----------
 
@@ -119,5 +108,9 @@ condition = f"concat(target.parkingaddressreference, target.parkingaddresstype) 
 
 # COMMAND ----------
 
-# MAGIC %sql
-# MAGIC select DISTINCT(parkingaddressreferencetype) from Parkeeradres_delta_b
+
+
+
+# COMMAND ----------
+
+

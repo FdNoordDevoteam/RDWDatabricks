@@ -25,6 +25,7 @@ table_name = "tbl_"+file_name+"_Bd"
 tbl_file_Bd = DeltaTable.forPath(spark, f"/mnt/iotdata/{file_name}/table/tbl_{file_name}_Bd")
 file_B_DF = tbl_file_Bd.toDF()
 display(file_B_DF)
+file_B_DF = file_B_DF[file_B_DF.End_Date.isNull()]
 
 
 # COMMAND ----------
@@ -107,3 +108,7 @@ condition = f"concat(target.kenteken, target.brandstof_omschrijving) = source.ME
 
 # MAGIC %sql
 # MAGIC select * from gekentekende_voertuigen_brandstof_delta_b;
+
+# COMMAND ----------
+
+

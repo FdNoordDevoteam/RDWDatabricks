@@ -1,5 +1,5 @@
 # Databricks notebook source
-from datetime import date
+from datetime import *
 from pyspark.sql.functions import *
 from pyspark.sql.types import *
 from delta import *
@@ -8,7 +8,7 @@ from delta import *
 
 datetoday = date.today().strftime("%Y-%m-%d")
 firstdate = "2023-03-24"
-yesterday = "2023-03-29"
+
 
 # COMMAND ----------
 
@@ -25,14 +25,15 @@ table_name = "tbl_"+file_name+"_Bd"
 tbl_file_Bd = DeltaTable.forPath(spark, f"/mnt/iotdata/{file_name}/table/tbl_{file_name}_Bd")
 file_B_DF = tbl_file_Bd.toDF()
 display(file_B_DF)
+file_B_DF = file_B_DF[file_B_DF.End_Date.isNull()]
 
 
 # COMMAND ----------
 
-# MAGIC %sql
-# MAGIC Create Table gekentekende_voertuigen_delta_b
-# MAGIC ()
-# MAGIC Location '/mnt/iotdata/Gekentekende_Voertuigen/table/tbl_gekentekende_voertuigen_Bd'
+# %sql
+# Create Table Gekentekende_Voertuigen_delta_b
+# ()
+# Location '/mnt/iotdata/Gekentekende_Voertuigen/table/tbl_Gekentekende_Voertuigen_Bd'
 
 # COMMAND ----------
 
@@ -84,6 +85,10 @@ display(scdDF)
 
 # COMMAND ----------
 
+display(scdDF.limit(1))
+
+# COMMAND ----------
+
 dict_delta = dict()
 for column_DF in scdDF.columns[:int(len(scdDF.columns)/2)]:
     dict_delta[column_DF] = "source."+column_DF
@@ -94,11 +99,23 @@ display(dict_delta)
 
 # COMMAND ----------
 
-tbl_gekentekende_voertuigen_Bd.alias("target").merge(
+tbl_file_Bd.alias("target").merge(
 source = scdDF.alias("source"),
-condition = f"target.{primary_key} = source.MERGEKEY and target.End_Date is null"
+condition = "target.kenteken = source.MERGEKEY and target.End_Date is null"
 ).whenMatchedUpdate(set = 
                    {
-                       "End_Date" : "current_date"
+                        "End_Date" : 'current_date' 
                    }
 ).whenNotMatchedInsert(values = dict_delta).execute()
+
+# COMMAND ----------
+
+# MAGIC %sql
+# MAGIC select Start_Date, End_Date from Gekentekende_Voertuigen_delta_b
+# MAGIC group BY Start_Date, End_Date
+
+# COMMAND ----------
+
+# MAGIC %sql
+# MAGIC select * from Gekentekende_Voertuigen_delta_b
+# MAGIC where kenteken = "00KJD7"

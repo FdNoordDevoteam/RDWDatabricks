@@ -2,6 +2,7 @@
 from datetime import date
 from pyspark.sql.functions import *
 from pyspark.sql.types import *
+
 from delta import *
 
 # COMMAND ----------
@@ -25,6 +26,7 @@ table_name = "tbl_"+file_name+"_Bd"
 tbl_file_Bd = DeltaTable.forPath(spark, f"/mnt/iotdata/{file_name}/table/tbl_{file_name}_Bd")
 file_B_DF = tbl_file_Bd.toDF()
 display(file_B_DF)
+file_B_DF = file_B_DF[file_B_DF.End_Date.isNull()]
 
 
 # COMMAND ----------
@@ -40,16 +42,16 @@ display(file_B_DF)
 
 # COMMAND ----------
 
-# MAGIC %sql
-# MAGIC SELECT kenteken, count(kenteken) as aantal from geconstateerde_gebreken_delta_b
-# MAGIC group by kenteken
-# MAGIC ORDER BY aantal DESC
+# %sql
+# SELECT kenteken, count(kenteken) as aantal from geconstateerde_gebreken_delta_b
+# group by kenteken
+# ORDER BY aantal DESC
 
 # COMMAND ----------
 
-# MAGIC %sql
-# MAGIC select * from geconstateerde_gebreken_delta_b
-# MAGIC where meld_datum_door_keuringsinstantie_dt is null
+# %sql
+# select * from geconstateerde_gebreken_delta_b
+# where meld_datum_door_keuringsinstantie_dt is null
 
 # COMMAND ----------
 
@@ -122,3 +124,7 @@ condition = f"concat(target.kenteken, target.gebrek_identificatie, target.meld_d
 # MAGIC %sql
 # MAGIC select * from Geconstateerde_Gebreken_delta_b
 # MAGIC ORDER BY Start_Date DESC
+
+# COMMAND ----------
+
+
